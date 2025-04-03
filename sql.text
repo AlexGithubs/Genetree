@@ -1,0 +1,47 @@
+Person table:
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    gender TEXT CHECK(gender IN ('male', 'female', 'other', 'unknown')),
+    birth_date DATE,
+    death_date DATE,
+    biography TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+relationship table:
+CREATE TABLE relationship (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person1_id INTEGER NOT NULL,
+    person2_id INTEGER NOT NULL,
+    relationship_type TEXT NOT NULL CHECK(relationship_type IN ('parent-child', 'spouse', 'sibling', 'other')),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person1_id) REFERENCES person(id) ON DELETE CASCADE,
+    FOREIGN KEY (person2_id) REFERENCES person(id) ON DELETE CASCADE
+);
+
+custom_field table:
+CREATE TABLE custom_field (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INTEGER NOT NULL,
+    field_name TEXT NOT NULL,
+    field_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
+);
+
+media table:
+CREATE TABLE media (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INTEGER NOT NULL,
+    media_type TEXT CHECK(media_type IN ('photo', 'video')),
+    file_path TEXT NOT NULL,
+    title TEXT,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
+);

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Tree Application</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/tree.css">
+    <link rel="stylesheet" href="css/profiles.css">
+    <!-- D3.js for tree visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Family Tree Application</h1>
+        <nav>
+            <button id="add-member-btn">Add Family Member</button>
+            <button id="add-relationship-btn">Add Relationship</button>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="container">
+            <!-- Tree Visualization -->
+            <section id="tree-container">
+                <div id="tree-controls">
+                    <select id="tree-root-selector">
+                        <option value="">-- Select Root Person --</option>
+                    </select>
+                    <div class="zoom-controls">
+                        <button id="zoom-in">+</button>
+                        <button id="zoom-out">-</button>
+                        <button id="reset-zoom">Reset</button>
+                    </div>
+                </div>
+                <div id="tree-visualization"></div>
+            </section>
+            
+            <!-- Member Profile Section -->
+            <section id="profile-container" class="hidden">
+                <button id="close-profile">×</button>
+                <div id="profile-content">
+                    <div class="profile-header">
+                        <div class="profile-photo">
+                            <img id="profile-image" src="assets/default-profile.png" alt="Profile Photo">
+                            <button id="upload-photo-btn">Upload Photo</button>
+                        </div>
+                        <div class="profile-basic-info">
+                            <h2 id="profile-name"></h2>
+                            <p id="profile-dates"></p>
+                            <div class="profile-actions">
+                                <button id="edit-profile-btn">Edit Profile</button>
+                                <button id="delete-profile-btn">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-details">
+                        <div class="profile-section">
+                            <h3>Biography</h3>
+                            <p id="profile-biography"></p>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h3>Custom Fields</h3>
+                            <div id="custom-fields-container"></div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h3>Relationships</h3>
+                            <div id="relationships-container"></div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h3>Media Gallery</h3>
+                            <div id="media-container">
+                                <div id="photos-container"></div>
+                                <div id="videos-container"></div>
+                            </div>
+                            <button id="upload-media-btn">Upload Media</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Modals -->
+    <!-- Add/Edit Member Modal -->
+    <div id="member-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="member-modal-title">Add Family Member</h2>
+            
+            <form id="member-form">
+                <input type="hidden" id="member-id">
+                
+                <div class="form-group">
+                    <label for="first-name">First Name:</label>
+                    <input type="text" id="first-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Last Name:</label>
+                    <input type="text" id="last-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gender">Gender:</label>
+                    <select id="gender">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="birth-date">Birth Date:</label>
+                    <input type="date" id="birth-date">
+                </div>
+                
+                <div class="form-group">
+                    <label for="death-date">Death Date:</label>
+                    <input type="date" id="death-date">
+                </div>
+                
+                <div class="form-group">
+                    <label for="biography">Biography:</label>
+                    <textarea id="biography" rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <h3>Custom Fields</h3>
+                    <div id="custom-fields-editor">
+                        <!-- Custom fields will be added dynamically -->
+                    </div>
+                    <button type="button" id="add-field-btn">Add Custom Field</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add Relationship Modal -->
+    <div id="relationship-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Add Relationship</h2>
+            
+            <form id="relationship-form">
+                <div class="form-group">
+                    <label for="person1">Person 1:</label>
+                    <select id="person1" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="relationship-type">Relationship Type:</label>
+                    <select id="relationship-type" required>
+                        <option value="parent-child">Parent-Child</option>
+                        <option value="spouse">Spouse</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="person2">Person 2:</label>
+                    <select id="person2" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="relationship-description">Description (Optional):</label>
+                    <textarea id="relationship-description" rows="2"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Upload Media Modal -->
+    <div id="media-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Upload Media</h2>
+            
+            <form id="media-form" enctype="multipart/form-data">
+                <input type="hidden" id="media-person-id">
+                
+                <div class="form-group">
+                    <label for="media-file">Select File:</label>
+                    <input type="file" id="media-file" accept="image/*,video/*" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="media-title">Title:</label>
+                    <input type="text" id="media-title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="media-description">Description:</label>
+                    <textarea id="media-description" rows="2"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit">Upload</button>
+                    <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/tree.js"></script>
+    <script src="js/profiles.js"></script>
+    <script src="js/relationships.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
