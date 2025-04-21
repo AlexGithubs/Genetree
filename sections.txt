@@ -1,0 +1,45 @@
+family-tree-app/
+│
+├── backend/
+│   ├── app.py             # Main Flask application
+│   ├── config.py          # Configuration settings
+│   ├── models/            # Database models
+│   │   ├── __init__.py
+│   │   ├── person.py      # Person model
+│   │   ├── relationship.py # Relationship model
+│   │   ├── media.py       # Media model for photos/videos
+│   │   └── custom_field.py # Custom fields model
+│   │
+│   ├── routes/            # API routes
+│   │   ├── __init__.py
+│   │   ├── members.py     # Member management endpoints
+│   │   ├── relationships.py # Relationship management endpoints
+│   │   └── family_tree.py # Family tree data endpoints
+│   │
+│   ├── services/          # Business logic
+│   │   ├── __init__.py
+│   │   ├── member_service.py
+│   │   ├── relationship_service.py
+│   │   └── tree_service.py
+│   │
+│   └── utils/             # Utility functions
+│       ├── __init__.py
+│       └── validators.py  # Input validation
+│
+├── frontend/
+│   ├── index.html         # Main page
+│   ├── css/
+│   │   ├── main.css       # Main styles
+│   │   ├── tree.css       # Tree visualization styles
+│   │   └── profiles.css   # Profile customization styles
+│   │
+│   ├── js/
+│   │   ├── api.js         # API communication
+│   │   ├── tree.js        # Tree visualization logic
+│   │   ├── profiles.js    # Profile management
+│   │   └── relationships.js # Relationship management
+│   │
+│   └── assets/            # Static assets
+│       └── icons/         # UI icons
+│
+└── requirements.txt       # Python dependencies

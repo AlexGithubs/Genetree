@@ -1,0 +1,187 @@
+/* Tree visualization styles */
+#tree-container {
+    flex: 2;
+    height: calc(100vh - 140px);
+    border-radius: 12px;
+    background-color: var(--card-bg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+#tree-controls {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(26, 45, 64, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+#tree-root-selector {
+    flex: 1;
+    max-width: 250px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--light-color);
+    background-color: rgba(255, 255, 255, 0.08);
+    transition: all 0.15s ease;
+}
+
+#tree-root-selector:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(74, 141, 183, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.zoom-controls button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    padding: 0;
+    border-radius: 6px;
+    background-color: rgba(74, 141, 183, 0.2);
+    color: var(--light-color);
+    border: 1px solid rgba(74, 141, 183, 0.4);
+    transition: all 0.15s ease;
+}
+
+.zoom-controls button:hover {
+    background-color: rgba(74, 141, 183, 0.4);
+    box-shadow: 0 0 10px rgba(74, 141, 183, 0.3);
+    transform: translateY(-1px);
+}
+
+.zoom-controls button:active {
+    transform: translateY(0);
+}
+
+#reset-zoom {
+    width: auto;
+    padding: 0 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+#tree-visualization {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background-color: var(--card-bg);
+    padding: 20px;
+}
+
+/* Node styles */
+.node {
+    cursor: pointer;
+    transition: none; /* Remove transition delay */
+}
+
+.node circle {
+    fill: rgba(255, 255, 255, 0.15);
+    stroke: var(--primary-color);
+    stroke-width: 2.5px;
+    transition: none; /* Remove transition delay */
+}
+
+.node:hover circle {
+    stroke-width: 3.5px;
+    filter: drop-shadow(0 0 8px rgba(74, 141, 183, 0.8));
+    fill: rgba(255, 255, 255, 0.25);
+}
+
+.node.male circle {
+    stroke: #5da2cc;
+}
+
+.node.female circle {
+    stroke: #d3a27d;
+}
+
+.node.other circle, .node.unknown circle {
+    stroke: #a8c09c;
+    opacity: 0.9;
+}
+
+.node.deceased circle {
+    stroke-dasharray: 3, 3;
+    opacity: 0.7;
+}
+
+.node text {
+    font-size: 12px;
+    text-anchor: middle;
+    fill: var(--light-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: none; /* Remove transition delay */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+}
+
+.node:hover text {
+    font-weight: 600;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+    font-size: 12.5px;
+}
+
+/* Link styles */
+.link {
+    fill: none;
+    stroke: rgba(200, 210, 220, 0.3);
+    stroke-width: 1.8px;
+    transition: none; /* Remove transition delay */
+}
+
+.link.parent-child {
+    stroke: #5da2cc;
+    opacity: 0.7;
+}
+
+.link.spouse {
+    stroke: #d3a27d;
+    stroke-dasharray: 5, 5;
+    opacity: 0.7;
+}
+
+.link.sibling {
+    stroke: #68a5cc;
+    stroke-dasharray: 1, 3;
+    opacity: 0.6;
+}
+
+.link.other {
+    stroke: rgba(200, 210, 220, 0.5);
+    stroke-dasharray: 10, 2;
+    opacity: 0.5;
+}
+
+/* Diagnostic message */
+.diagnostic-message {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 10px 15px;
+    background-color: rgba(26, 45, 64, 0.8);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--light-color);
+    box-shadow: var(--box-shadow);
+    max-width: 300px;
+    z-index: 10;
+    border: 1px solid var(--border-color);
+}

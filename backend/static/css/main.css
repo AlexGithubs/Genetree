@@ -1,0 +1,395 @@
+/* Main CSS */
+:root {
+    /* Rich, Immersive Color Palette */
+    --dark-blue: #1d3244;
+    --blue-accent: #4a8db7;
+    --warm-wood: #8a6845;
+    
+    /* UI Colors */
+    --primary-color: var(--blue-accent);
+    --accent-color: var(--warm-wood);
+    --background-color: var(--dark-blue);
+    --light-color: #f0e6d8;
+    --card-bg: #243a4d;
+    --dark-color: #f0e6d8;
+    --text-light: #a7b7c7;
+    --border-color: rgba(155, 175, 195, 0.2);
+    --success-color: #5da386;
+    --danger-color: #b05c5c;
+    --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    --color-accent: var(--warm-wood); /* Alias for profile.css */
+    --color-box-bg: var(--card-bg); /* Alias for profile.css */
+    --color-text-muted: var(--text-light); /* Alias for profile.css */
+}
+
+/* Add hover variant for accent color */
+:root {
+    --color-accent-hover: #9a7855;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: var(--background-color);
+    background-image: linear-gradient(135deg, var(--dark-blue) 0%, #132533 100%);
+    min-height: 100vh;
+}
+
+header {
+    background-color: rgba(26, 45, 64, 0.8);
+    backdrop-filter: blur(10px);
+    color: var(--light-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--box-shadow);
+    border-bottom: 1px solid var(--border-color);
+}
+
+header h1 {
+    color: var(--light-color);
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+nav {
+    display: flex;
+    gap: 12px;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+button {
+    background-color: rgba(74, 141, 183, 0.2);
+    color: var(--light-color);
+    border: 1px solid rgba(74, 141, 183, 0.4);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button:hover {
+    background-color: rgba(74, 141, 183, 0.4);
+    box-shadow: 0 0 15px rgba(74, 141, 183, 0.4);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.primary-btn {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.primary-btn:hover {
+    background-color: #5a9cc4;
+    box-shadow: 0 0 15px rgba(74, 141, 183, 0.6);
+}
+
+.secondary-btn {
+    background-color: rgba(26, 45, 64, 0.8);
+    color: var(--light-color);
+    border: 1px solid var(--primary-color);
+}
+
+.secondary-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+    box-shadow: 0 0 15px rgba(74, 141, 183, 0.4);
+}
+
+.accent-btn {
+    background-color: var(--accent-color);
+    color: var(--light-color);
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.accent-btn:hover {
+    background-color: #9a7855;
+    box-shadow: 0 0 15px rgba(138, 104, 69, 0.4);
+}
+
+.danger-btn {
+    background-color: rgba(176, 92, 92, 0.2);
+    color: #e0b0b0;
+    border: 1px solid var(--danger-color);
+}
+
+.danger-btn:hover {
+    background-color: var(--danger-color);
+    color: var(--light-color);
+    box-shadow: 0 0 15px rgba(176, 92, 92, 0.4);
+}
+
+/* Button with icon */
+.btn-icon {
+    padding: 8px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Empty state styling */
+.empty-state {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-style: italic;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--light-color);
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--light-color);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(74, 141, 183, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--light-color);
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.close-modal:hover {
+    opacity: 1;
+}
+
+/* Card styles */
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* Section styling */
+.section-title {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .container {
+        flex-direction: row;
+    }
+}
+
+/* Filterable Selects */
+.filterable-select-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.filterable-select-container .person-filter {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--light-color);
+    transition: all 0.2s ease;
+}
+
+.filterable-select-container .person-filter:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Custom dropdown */
+.custom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    border: 1px solid var(--primary-color);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    margin-top: -2px;
+}
+
+/* Custom dropdown items */
+.dropdown-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--light-color);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(74, 141, 183, 0.3);
+}
+
+/* When input has focus and dropdown is visible */
+.filterable-select-container .person-filter:focus + .custom-dropdown,
+.custom-dropdown:hover {
+    display: block;
+}
+
+/* Styles for the person search dropdown in relationship modal */
+.filterable-select-container {
+    position: relative; /* Needed for absolute positioning of results list */
+}
+
+.search-results-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%; /* Position directly below the input */
+    background-color: var(--modal-bg-color, #2c3e50); /* Match modal or use dark fallback */
+    border: 1px solid var(--border-color, #445a70);
+    border-top: none; /* Avoid double border with input */
+    border-radius: 0 0 4px 4px;
+    max-height: 200px; /* Limit height and enable scrolling */
+    overflow-y: auto;
+    z-index: 1000; /* Ensure it appears above other elements */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Darker shadow for dark theme */
+    display: none; /* Hidden by default */
+}
+
+.result-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-color-light, #ecf0f1); /* Light text for dark background */
+}
+
+.result-item:hover {
+    background-color: var(--accent-color-dark, #34495e); /* Darker hover for dark theme */
+}
+
+.result-item strong {
+    font-weight: bold;
+    color: var(--accent-color, #3498db); /* Adjusted accent for visibility */
+}
+
+/* Adjust input styles slightly if needed */
+.person-search-input {
+    width: 100%;
+    box-sizing: border-box; /* Ensure padding/border are included in width */
+}
+
+/* Ensure modal content doesn't clip the dropdown */
+#relationship-modal .modal-content {
+    overflow: visible; /* Allow dropdown to overflow modal bounds */
+}
