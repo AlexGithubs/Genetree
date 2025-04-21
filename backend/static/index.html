@@ -345,6 +345,44 @@
         </div>
     </div>
     
+    <!-- Manage Categories Modal -->
+    <div id="manage-categories-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Manage Custom Categories</h2>
+                <button class="close-modal" type="button">&times;</button>
+            </div>
+            <div id="manageable-categories-list">
+                <!-- Categories will be listed here -->
+                <p class="empty-state">No custom categories to manage.</p> 
+            </div>
+            <div class="form-actions">
+                 <button type="button" class="cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rename Category Modal -->
+    <div id="rename-category-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename Category</h2>
+                <button class="close-modal" type="button">&times;</button>
+            </div>
+            <form id="rename-category-form">
+                <input type="hidden" id="rename-category-old-id">
+                <div class="form-group">
+                    <label for="rename-category-new-name">New Category Name: <span class="required">*</span></label>
+                    <input type="text" id="rename-category-new-name" required>
+                </div>
+                 <div class="form-actions">
+                    <button type="submit" class="accent-btn">Rename</button>
+                    <button type="button" class="cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <!-- JavaScript -->
     <script src="js/api.js"></script>
     <script src="js/tree_diagnostics.js"></script>

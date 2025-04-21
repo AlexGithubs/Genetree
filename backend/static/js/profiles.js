@@ -1760,25 +1760,19 @@ class MediaCategoryManager {
         this.currentCategory = 'photos';
         this.currentMemberId = null;
         
-        // Bind methods to this context
-        this.showTextEntryModal = this.showTextEntryModal.bind(this);
-        this.saveTextEntry = this.saveTextEntry.bind(this);
-        this.saveTextEntries = this.saveTextEntries.bind(this);
-        this.loadTextEntries = this.loadTextEntries.bind(this);
-        this.toggleFullscreen = this.toggleFullscreen.bind(this);
-        this.showManageCategoriesModal = this.showManageCategoriesModal.bind(this);
-        this.showAddCategoryModal = this.showAddCategoryModal.bind(this);
-        this.addCategory = this.addCategory.bind(this);
-        this.switchCategory = this.switchCategory.bind(this);
-        this.createTextEntryModal = this.createTextEntryModal.bind(this);
-        
-        // Initialize UI
+        // Bind methods 
+        // ... (existing binds) ...
+        this.showRenameCategoryModal = this.showRenameCategoryModal.bind(this); // Bind new method
+        this.handleRenameCategory = this.handleRenameCategory.bind(this);   // Bind new method
+        this.handleDuplicateCategory = this.handleDuplicateCategory.bind(this); // Bind duplicate method
+
+        // Initialize UI 
         this.initializeTabs();
         this.initializeNotesTab();
-        this.createTextEntryModal();
         this.initializeCategoryModal();
-        
-        console.log("DEBUG: MediaCategoryManager initialized");
+        this.initializeRenameModal(); // Add initializer for the new modal
+
+        console.log("DEBUG: MediaCategoryManager initialized (Using arrow functions + new binds)");
     }
 
     /**
@@ -1792,332 +1786,154 @@ class MediaCategoryManager {
         
         console.log(`DEBUG: Loading categories for member ${memberId}`);
         
-        // Store current member ID
+        // Check if we are already loaded for this member to prevent redundant work
+        if (this.currentMemberId === memberId && this.categories) {
+            console.log(`DEBUG: Categories already loaded for member ${memberId}, ensuring UI is correct.`);
+             // Just ensure the correct category is active
+            this.switchCategory(this.currentCategory || 'photos');
+            return;
+        }
+
+        // Store new member ID
         this.currentMemberId = memberId;
+
+        // Clear previous custom tabs and containers before loading new ones
+        this.clearCustomTabsAndContainers();
         
-        // Load saved categories from localStorage
+        // Reset categories to defaults for the new member
+        this.categories = [...this.defaultCategories];
+        console.log(`DEBUG: Initialized with ${this.defaultCategories.length} default categories for member ${memberId}`);
+
+        // Load saved custom categories from localStorage
         const storageKey = `mediaCategories_${memberId}`;
         const savedCategories = localStorage.getItem(storageKey);
         
-        console.log(`DEBUG: Retrieved from localStorage key: ${storageKey}`);
         if (savedCategories) {
-            console.log(`DEBUG: Found saved categories in localStorage: ${savedCategories}`);
-        } else {
-            console.log(`DEBUG: No saved categories found in localStorage for this member`);
-        }
-        
-        // Clear existing custom tabs and containers
-        this.clearCustomTabsAndContainers();
-        
-        // Start with default categories
-        this.categories = [...this.defaultCategories];
-        console.log(`DEBUG: Initialized with ${this.defaultCategories.length} default categories`);
-        
-        if (savedCategories) {
+            console.log(`DEBUG: Found saved categories for member ${memberId}`);
             try {
-                // Parse saved categories and add them to defaults
                 const customCategories = JSON.parse(savedCategories);
                 console.log(`DEBUG: Parsed ${customCategories.length} custom categories from localStorage`);
                 
-                // Only add custom categories (skip default ones)
-                let addedCount = 0;
+                // Add custom categories to the list and create UI elements if they don't exist
                 customCategories.forEach(category => {
-                    if (!this.defaultCategories.some(def => def.id === category.id)) {
+                    // Check if category already exists in this.categories (shouldn't for custom ones)
+                    if (!this.categories.some(c => c.id === category.id)) {
                         this.categories.push(category);
-                        addedCount++;
-                        console.log(`DEBUG: Added custom category: ${category.name} (${category.id})`);
-                    } else {
-                        console.log(`DEBUG: Skipped adding default category: ${category.name} (${category.id})`);
-                    }
-                });
-                
-                console.log(`DEBUG: Added ${addedCount} custom categories from localStorage`);
-                console.log(`DEBUG: Total categories for member ${memberId}: ${this.categories.length}`);
-                
-                // Create tabs and containers for custom categories
-                this.categories.forEach(category => {
-                    // Skip default categories as they already exist
-                    if (!this.defaultCategories.some(def => def.id === category.id)) {
-                        console.log(`DEBUG: Creating UI elements for custom category: ${category.name} (${category.id})`);
+                        console.log(`DEBUG: Added custom category to list: ${category.name} (${category.id})`);
+                        // Create UI elements ONLY IF they don't already exist in the DOM
                         this.createCategoryTabAndContainer(category.id, category.name, category.type);
+                    } else {
+                        console.warn(`DEBUG: Custom category ${category.id} was already in the list? Skipping.`);
                     }
                 });
-                
-                // Load text entries for all text categories
+
+            } catch (error) {
+                console.error('ERROR: Error parsing or processing saved categories:', error);
+                // Fall back to only default categories in case of error
+                this.categories = [...this.defaultCategories]; 
+            }
+        } else {
+            console.log(`DEBUG: No custom categories found in localStorage for member ${memberId}`);
+        }
+
+        // Log final categories for this member
+        console.log(`DEBUG: Final categories for member ${memberId}:`, this.categories);
+
+        // Load text entries for all relevant categories
                 this.categories.forEach(category => {
                     if (category.type === 'text' || category.type === 'mixed') {
                         this.loadTextEntries(category.id);
                     }
                 });
                 
-                console.log(`%cSuccessfully loaded ${this.categories.length} total categories for member ${memberId}`, 'color: green; font-weight: bold');
-                
-            } catch (error) {
-                console.error('ERROR: Error loading categories:', error);
-                // On error, fall back to default categories
-                this.categories = [...this.defaultCategories];
-                console.log(`DEBUG: Falling back to ${this.defaultCategories.length} default categories due to error`);
-            }
-        } else {
-            console.log(`DEBUG: No custom categories found, using ${this.defaultCategories.length} default categories`);
-        }
-        
-        // Log all categories for debugging
-        console.log(`DEBUG: All categories for member ${memberId}:`, this.categories);
-        
-        // Set active category
+        // Activate the 'photos' category by default after loading
         this.switchCategory('photos');
+        console.log(`%cFinished loading categories for member ${memberId}`, 'color: green; font-weight: bold');
     }
 
     /**
-     * Create tab and container for category
+     * Create tab and container for category only if they don't exist
      */
     createCategoryTabAndContainer(categoryId, categoryName, categoryType) {
         try {
-            console.log(`DEBUG: Creating category tab and container for ${categoryName} (${categoryId})`);
+            console.log(`DEBUG: Checking/Creating category tab and container for ${categoryName} (${categoryId})`);
             
             // Validate inputs
             if (!categoryId || !categoryName || !categoryType) {
-                console.error("ERROR: Missing required parameters for creating category tab/container", {
-                    id: categoryId,
-                    name: categoryName,
-                    type: categoryType
-                });
+                console.error("ERROR: Missing required parameters for creating category tab/container");
                 return false;
             }
             
-            // CRITICAL FIX: First ensure the profile has been loaded
             const profileContainer = document.getElementById('profile-container');
-            if (!profileContainer || profileContainer.classList.contains('hidden')) {
-                console.error("ERROR: Profile container not found or hidden - cannot create category tab");
-                return false;
-            }
-            
-            // CRITICAL FIX: Try multiple selectors to find the media gallery
-            let mediaGallery = document.querySelector('.media-gallery');
-            if (!mediaGallery) {
-                mediaGallery = document.querySelector('#media-gallery');
-            }
-            if (!mediaGallery) {
-                mediaGallery = profileContainer.querySelector('.media-gallery');
-            }
-            if (!mediaGallery) {
-                mediaGallery = profileContainer.querySelector('[class*="media"]');
-            }
-            
-            // Last resort: create the media gallery if it doesn't exist
-            if (!mediaGallery) {
-                console.log("DEBUG: Media gallery not found - creating it");
-                
-                // Find a suitable container to append to
-                const contentArea = profileContainer.querySelector('.profile-content') || 
-                                   profileContainer.querySelector('.profile-details') || 
-                                   profileContainer;
-                
-                if (!contentArea) {
-                    console.error("ERROR: Could not find a suitable container for the media gallery");
+            const mediaGallery = profileContainer?.querySelector('#media-container'); // Target specific container
+            const tabsContainer = mediaGallery?.querySelector('.media-category-tabs'); // More specific selector
+            const mediaContentArea = mediaGallery?.querySelector('#media-content'); // Where containers go
+
+            if (!mediaGallery || !tabsContainer || !mediaContentArea) {
+                console.error("ERROR: Essential media gallery elements not found.");
                     return false;
                 }
                 
-                // Create media gallery
-                mediaGallery = document.createElement('div');
-                mediaGallery.className = 'media-gallery';
-                mediaGallery.innerHTML = '<h3>Media Gallery</h3>';
-                contentArea.appendChild(mediaGallery);
-                console.log("DEBUG: Created new media gallery element");
-            }
-            
-            // Check if tab container exists first, create it if not
-            let tabsContainer = mediaGallery.querySelector('.category-tabs');
-            if (!tabsContainer) {
-                console.log("DEBUG: Category tabs container not found, creating it");
-                tabsContainer = document.createElement('div');
-                tabsContainer.className = 'category-tabs';
-                mediaGallery.prepend(tabsContainer);
-                console.log("DEBUG: Created category tabs container");
-                
-                // Create default tabs if they don't exist
-                this.defaultCategories.forEach(cat => {
-                    const exists = tabsContainer.querySelector(`.category-tab[data-category="${cat.id}"]`);
-                    if (!exists) {
-                        const defaultTab = document.createElement('div');
-                        defaultTab.className = 'category-tab';
-                        defaultTab.setAttribute('data-category', cat.id);
-                        defaultTab.textContent = cat.name;
-                        tabsContainer.appendChild(defaultTab);
-                        
-                        // Add event listener
-                        defaultTab.addEventListener('click', () => {
-                            this.switchCategory(cat.id);
-                        });
-                        
-                        console.log(`DEBUG: Created default tab for ${cat.name}`);
-                    }
-                });
-                
-                // Add other necessary tabs if they don't exist
-                const addTabExists = tabsContainer.querySelector('.add-tab');
-                if (!addTabExists) {
-                    const addTab = document.createElement('div');
-                    addTab.className = 'category-tab add-tab';
-                    addTab.textContent = '+ Add Category';
-                    addTab.addEventListener('click', () => {
-                        console.log("DEBUG: Add category button clicked");
-                        this.showAddCategoryModal();
-                    });
-                    tabsContainer.appendChild(addTab);
-                    console.log("DEBUG: Created add category tab");
-                }
-                
-                const manageTabExists = tabsContainer.querySelector('.manage-tab');
-                if (!manageTabExists) {
-                    const manageTab = document.createElement('div');
-                    manageTab.className = 'category-tab manage-tab';
-                    manageTab.innerHTML = '<i class="fas fa-cog"></i> Manage';
-                    manageTab.addEventListener('click', () => {
-                        console.log("DEBUG: Manage categories button clicked");
-                        this.showManageCategoriesModal();
-                    });
-                    tabsContainer.appendChild(manageTab);
-                    console.log("DEBUG: Created manage categories tab");
-                }
-            }
-            
-            // Create default category containers if they don't exist
-            this.defaultCategories.forEach(cat => {
-                const exists = document.getElementById(`${cat.id}-container`);
-                if (!exists) {
-                    const container = document.createElement('div');
-                    container.id = `${cat.id}-container`;
-                    container.className = 'category-content';
-                    
-                    // Add appropriate content based on type
-                    if (cat.type === 'media') {
-                        container.innerHTML = `
-                            <div class="upload-controls">
-                                <button class="upload-media-btn">Upload Media</button>
-                            </div>
-                            <div class="media-items"></div>
-                        `;
-                        
-                        // Add event listener
-                        const uploadBtn = container.querySelector('.upload-media-btn');
-                        if (uploadBtn) {
-                            uploadBtn.addEventListener('click', () => {
-                                if (window.profilesManager) {
-                                    window.profilesManager.showMediaModal();
-                                }
-                            });
-                        }
-                    } else if (cat.type === 'text') {
-                        container.innerHTML = `
-                            <div class="text-controls">
-                                <button class="add-text-btn">Add Text Entry</button>
-                            </div>
-                            <div class="text-entries">
-                                <p>No entries yet. Click the button above to add one.</p>
-                            </div>
-                        `;
-                        
-                        // Add event listener
-                        const addTextBtn = container.querySelector('.add-text-btn');
-                        if (addTextBtn) {
-                            addTextBtn.addEventListener('click', () => {
-                                this.showTextEntryModal(cat.id);
-                            });
-                        }
-                    }
-                    
-                    mediaGallery.appendChild(container);
-                    console.log(`DEBUG: Created default container for ${cat.name}`);
-                }
-            });
-            
-            // Check if tab already exists (prevent duplicates)
-            const existingTab = tabsContainer.querySelector(`.category-tab[data-category="${categoryId}"]`);
-            if (existingTab) {
-                console.log(`DEBUG: Tab for category ${categoryId} already exists, skipping creation`);
-                return true;
-            }
-            
-            // Find add tab
-            const addTab = tabsContainer.querySelector('.add-tab');
-            if (!addTab) {
-                // Create add tab if it doesn't exist
-                const newAddTab = document.createElement('div');
-                newAddTab.className = 'category-tab add-tab';
-                newAddTab.textContent = '+ Add Category';
-                newAddTab.addEventListener('click', () => {
-                    this.showAddCategoryModal();
-                });
-                tabsContainer.appendChild(newAddTab);
-                console.log("DEBUG: Created new add category tab");
-            }
-            
-            // Create the tab element
-            const tab = document.createElement('div');
+            // --- Check and Create Tab ---            
+            let tab = tabsContainer.querySelector(`.category-tab[data-category="${categoryId}"]`);
+            if (!tab) {
+                console.log(`DEBUG: Tab for ${categoryId} not found, creating it.`);
+                tab = document.createElement('button'); // Use button for better semantics
             tab.className = 'category-tab';
             tab.setAttribute('data-category', categoryId);
-            tab.setAttribute('data-member-id', this.currentMemberId || ''); // Track which member this belongs to
             tab.textContent = categoryName;
+                tab.addEventListener('click', () => {
+                    this.switchCategory(categoryId);
+                });
             
-            // Insert before add tab (if it exists)
+                // Insert before the '+ Add Category' button
+                const addTab = tabsContainer.querySelector('.add-tab'); 
             if (addTab) {
                 tabsContainer.insertBefore(tab, addTab);
             } else {
-                tabsContainer.appendChild(tab);
+                    tabsContainer.appendChild(tab); // Fallback if add tab not found
             }
             console.log(`DEBUG: Created tab for category ${categoryId}`);
-            
-            // Check if container already exists
-            const existingContainer = document.getElementById(`${categoryId}-container`);
-            if (existingContainer) {
-                console.log(`DEBUG: Container for category ${categoryId} already exists, skipping creation`);
-                return true;
+            } else {
+                console.log(`DEBUG: Tab for category ${categoryId} already exists.`);
             }
             
-            // Create the container element
-            const container = document.createElement('div');
+            // --- Check and Create Container ---            
+            let container = mediaContentArea.querySelector(`#${categoryId}-container`);
+            if (!container) {
+                console.log(`DEBUG: Container for ${categoryId} not found, creating it.`);
+                container = document.createElement('div');
             container.id = `${categoryId}-container`;
-            container.className = 'category-content';
-            container.setAttribute('data-member-id', this.currentMemberId || ''); // Track which member this belongs to
+                container.className = 'category-content'; // Initially hidden by switchCategory logic
             
             // Add appropriate content based on type
+                let contentHTML = '';
             if (categoryType === 'media' || categoryType === 'mixed') {
-                container.innerHTML = `
-                    <div class="upload-controls">
-                        <button class="upload-media-btn">Upload Media</button>
+                    contentHTML += `
+                        <div class="media-items empty-state">
+                            <p>No media added to this category yet.</p>
                     </div>
-                    <div class="media-items"></div>
-                `;
-                
-                // Add event listener to upload button
-                const uploadBtn = container.querySelector('.upload-media-btn');
-                if (uploadBtn) {
-                    uploadBtn.addEventListener('click', () => {
-                        if (window.profilesManager) {
-                            window.profilesManager.showMediaModal();
-                        }
-                    });
+                    `;
+                    // Note: Upload button is now global/outside categories
                 }
-            }
-            
             if (categoryType === 'text' || categoryType === 'mixed') {
-                // If it's mixed type, add a separator
                 if (categoryType === 'mixed') {
-                    const separator = document.createElement('hr');
-                    container.appendChild(separator);
+                        contentHTML += '<hr>'; // Separator for mixed type
+                    }
+                    contentHTML += `
+                        <div class="text-entries empty-state">
+                             <p>No text entries added yet.</p>
+                        </div>
+                        <div class="text-controls">
+                             <button class="add-text-btn accent-btn">Add Text Entry</button>
+                        </div>
+                    `;
                 }
-                
-                const textControls = document.createElement('div');
-                textControls.className = 'text-controls';
-                textControls.innerHTML = `
-                    <button class="add-text-btn">Add Text Entry</button>
-                `;
-                container.appendChild(textControls);
-                
-                // Add event listener to add text button
-                const addTextBtn = textControls.querySelector('.add-text-btn');
+                container.innerHTML = contentHTML;
+
+                // Add event listener for 'Add Text Entry' if applicable
+                if (categoryType === 'text' || categoryType === 'mixed') {
+                    const addTextBtn = container.querySelector('.add-text-btn');
                 if (addTextBtn) {
                     addTextBtn.addEventListener('click', () => {
                         this.showTextEntryModal(categoryId);
@@ -2125,24 +1941,13 @@ class MediaCategoryManager {
                 }
             }
             
-            // Add the container to the DOM
-            mediaGallery.appendChild(container);
+                mediaContentArea.appendChild(container);
             console.log(`DEBUG: Created container for category ${categoryId}`);
-            
-            // Verify the element was added successfully
-            const addedContainer = document.getElementById(`${categoryId}-container`);
-            if (!addedContainer) {
-                console.error(`ERROR: Container for ${categoryId} was not successfully added to DOM`);
-                return false;
+            } else {
+                 console.log(`DEBUG: Container for category ${categoryId} already exists.`);
             }
-            
-            // Add event listener to tab
-            tab.addEventListener('click', () => {
-                console.log(`DEBUG: Category tab ${categoryId} clicked`);
-                this.switchCategory(categoryId);
-            });
-            
-            console.log(`%cSuccessfully created category tab and container for ${categoryName} (${categoryId})`, 'color: green; font-weight: bold');
+
+            console.log(`%cSuccessfully ensured category UI exists for ${categoryName} (${categoryId})`, 'color: green;');
             return true;
         } catch (error) {
             console.error(`ERROR: Failed to create category tab and container for ${categoryName}:`, error);
@@ -2151,9 +1956,9 @@ class MediaCategoryManager {
     }
 
     /**
-     * Add new category
+     * Add new category - Convert to Arrow Function
      */
-    addCategory() {
+    addCategory = () => { 
         // Get the form values directly from the DOM
         const categoryNameInput = document.getElementById('category-name');
         const categoryTypeSelect = document.getElementById('category-type');
@@ -2388,10 +2193,11 @@ class MediaCategoryManager {
         // Add event listener to manage categories button
         const manageCategoriesBtn = document.querySelector('.manage-tab');
         if (manageCategoriesBtn) {
-            manageCategoriesBtn.addEventListener('click', () => {
-                console.log("DEBUG: Manage categories button clicked");
-                this.showManageCategoriesModal();
-            });
+            // Remove previous listener if any (safer)
+            const newBtn = manageCategoriesBtn.cloneNode(true);
+            manageCategoriesBtn.parentNode.replaceChild(newBtn, manageCategoriesBtn);
+            // Add listener using the correctly bound arrow function method
+            newBtn.addEventListener('click', this.showManageCategoriesModal);
         }
         
         // Add event listener to category form
@@ -2440,7 +2246,7 @@ class MediaCategoryManager {
     /**
      * Create text entry modal
      */
-    createTextEntryModal() {
+    createTextEntryModal() { // Keep as normal function, called directly
         // Check if modal already exists
         if (document.getElementById('text-entry-modal')) return;
         
@@ -2490,9 +2296,9 @@ class MediaCategoryManager {
     }
     
     /**
-     * Show modal for adding text entry
+     * Show modal for adding text entry - Convert to Arrow Function
      */
-    showTextEntryModal(categoryId, entryId = null) {
+    showTextEntryModal = (categoryId, entryId = null) => { 
         const modal = document.getElementById('text-entry-modal');
         if (!modal) return;
         
@@ -2515,9 +2321,9 @@ class MediaCategoryManager {
     }
     
     /**
-     * Save text entry
+     * Save text entry - Convert to Arrow Function
      */
-    saveTextEntry() {
+    saveTextEntry = () => { 
         const categoryId = document.getElementById('text-entry-category').value;
         const entryId = document.getElementById('text-entry-id').value;
         const title = document.getElementById('text-entry-title').value.trim();
@@ -2565,7 +2371,7 @@ class MediaCategoryManager {
     /**
      * Save text entries to localStorage
      */
-    saveTextEntries(categoryId, entries) {
+    saveTextEntries(categoryId, entries) { // Keep as normal function
         if (!this.currentMemberId) return;
         localStorage.setItem(`textEntries_${this.currentMemberId}_${categoryId}`, JSON.stringify(entries));
     }
@@ -2573,7 +2379,7 @@ class MediaCategoryManager {
     /**
      * Load text entries from localStorage
      */
-    loadTextEntries(categoryId) {
+    loadTextEntries(categoryId) { // Keep as normal function
         if (!this.currentMemberId) return;
         
         const container = document.getElementById(`${categoryId}-container`);
@@ -2642,7 +2448,7 @@ class MediaCategoryManager {
     /**
      * Format text content for display
      */
-    formatTextContent(content) {
+    formatTextContent(content) { // Keep as normal function
         // Convert line breaks to HTML
         content = content.replace(/\n/g, '<br>');
         
@@ -2664,7 +2470,7 @@ class MediaCategoryManager {
     /**
      * Toggle fullscreen mode for profile
      */
-    toggleFullscreen() {
+    toggleFullscreen() { // Keep as normal function (called via window)
         console.log("DEBUG: Global toggleFullscreen called");
         const profileContainer = document.getElementById('profile-container');
         const treeContainer = document.getElementById('tree-container');
@@ -2710,9 +2516,9 @@ class MediaCategoryManager {
     }
     
     /**
-     * Show modal for adding new category
+     * Show modal for adding new category - Convert to Arrow Function
      */
-    showAddCategoryModal() {
+    showAddCategoryModal = () => { 
         // CRITICAL FIX: First ensure we have the currentMemberId 
         if (!this.currentMemberId && window.profilesManager) {
             console.log("DEBUG: Getting member ID from profilesManager");
@@ -2762,17 +2568,202 @@ class MediaCategoryManager {
     }
     
     /**
-     * Show modal for managing categories
+     * Show modal for managing categories - Convert to Arrow Function
      */
-    showManageCategoriesModal() {
-        // Implement category management functionality
-        alert('Category management coming soon');
+    showManageCategoriesModal = () => { 
+        const modal = document.getElementById('manage-categories-modal');
+        const listContainer = document.getElementById('manageable-categories-list');
+        const emptyState = listContainer?.querySelector('.empty-state');
+
+        if (!modal || !listContainer) {
+            console.error("Manage categories modal elements not found.");
+            return;
+        }
+
+        // Ensure we have the current member ID
+        if (!this.currentMemberId) {
+             console.error("Cannot manage categories - no member selected");
+             alert("Please select a member profile first.");
+             return;
+        }
+        
+        console.log(`DEBUG: Populating manage categories modal for member ${this.currentMemberId}`);
+
+        // Filter out default categories
+        const customCategories = this.categories.filter(cat => 
+            !this.defaultCategories.some(def => def.id === cat.id)
+        );
+
+        // Clear previous list items (but keep the empty state message template)
+        listContainer.querySelectorAll('.manage-category-item').forEach(item => item.remove());
+
+        if (customCategories.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            console.log("DEBUG: No custom categories to manage.");
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+            
+            customCategories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'manage-category-item'; // Keep this class for spacing/border?
+                item.dataset.categoryId = category.id;
+
+                // Create info section (Name and Type)
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'category-info';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'category-name';
+                nameSpan.textContent = category.name;
+                infoDiv.appendChild(nameSpan);
+                
+                const typeSpan = document.createElement('span');
+                typeSpan.className = 'category-type';
+                typeSpan.textContent = `(${category.type})`; // Display type
+                infoDiv.appendChild(typeSpan);
+                
+                item.appendChild(infoDiv);
+
+                // Create actions section
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'category-actions';
+                
+                // Rename Button 
+                const renameBtn = document.createElement('button');
+                renameBtn.textContent = 'Rename';
+                renameBtn.className = 'secondary-btn small-btn'; 
+                // renameBtn.disabled = true; // Enable the button
+                renameBtn.title = "Rename Category";
+                // Add listener to show the rename modal
+                renameBtn.addEventListener('click', () => {
+                     this.showRenameCategoryModal(category.id, category.name);
+                });
+                actionsDiv.appendChild(renameBtn);
+
+                // Duplicate Button (Enable and add listener)
+                const duplicateBtn = document.createElement('button');
+                duplicateBtn.textContent = 'Duplicate';
+                duplicateBtn.className = 'secondary-btn small-btn';
+                // duplicateBtn.disabled = true; // Enable the button
+                duplicateBtn.title = "Duplicate Category";
+                duplicateBtn.addEventListener('click', () => {
+                    this.handleDuplicateCategory(category.id);
+                });
+                actionsDiv.appendChild(duplicateBtn);
+                
+                // Delete Button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'danger-btn small-btn'; 
+                deleteBtn.addEventListener('click', () => {
+                    this.deleteCategory(category.id);
+                });
+                actionsDiv.appendChild(deleteBtn);
+                
+                item.appendChild(actionsDiv);
+                listContainer.appendChild(item);
+            });
+             console.log(`DEBUG: Displayed ${customCategories.length} custom categories.`);
+        }
+
+        // Add event listeners for close/cancel if not already done
+        const closeButton = modal.querySelector('.close-modal');
+        const cancelButton = modal.querySelector('.cancel-btn');
+        if (closeButton && !closeButton.dataset.listenerAttached) {
+             closeButton.addEventListener('click', () => modal.classList.add('hidden'));
+             closeButton.dataset.listenerAttached = 'true';
+        }
+        if (cancelButton && !cancelButton.dataset.listenerAttached) {
+             cancelButton.addEventListener('click', () => modal.classList.add('hidden'));
+             cancelButton.dataset.listenerAttached = 'true';
+        }
+
+        // Show the modal
+        modal.classList.remove('hidden');
     }
-    
+
     /**
-     * Switch active category
+     * Delete a custom category 
      */
-    switchCategory(categoryId) {
+    deleteCategory(categoryId) { // Keep as normal function
+        if (!categoryId) {
+            console.error("Delete category called with no ID");
+            return;
+        }
+        console.log(`DEBUG: Attempting to delete category ${categoryId} for member ${this.currentMemberId}`);
+
+        // Find category in the array
+        const categoryIndex = this.categories.findIndex(cat => cat.id === categoryId);
+        if (categoryIndex === -1) {
+            console.error(`Category ${categoryId} not found in categories array.`);
+            // Maybe refresh the modal list in case of staleness?
+            this.showManageCategoriesModal(); 
+            return;
+        }
+
+        const categoryToDelete = this.categories[categoryIndex];
+
+        // Confirmation
+        if (!confirm(`Are you sure you want to delete the category "${categoryToDelete.name}"? 
+Associated text entries will also be removed. Media items will remain but lose this category tag.`)) {
+            return;
+        }
+
+        try {
+            // 1. Remove from categories array
+            this.categories.splice(categoryIndex, 1);
+            console.log(`DEBUG: Removed category ${categoryId} from array.`);
+
+            // 2. Remove the tab from the DOM
+            const tabToRemove = document.querySelector(`.category-tab[data-category="${categoryId}"]`);
+            if (tabToRemove) {
+                tabToRemove.remove();
+                console.log(`DEBUG: Removed category tab for ${categoryId}.`);
+            } else {
+                 console.warn(`DEBUG: Tab for ${categoryId} not found to remove.`);
+            }
+
+            // 3. Remove the content container from the DOM
+            const containerToRemove = document.getElementById(`${categoryId}-container`);
+            if (containerToRemove) {
+                containerToRemove.remove();
+                console.log(`DEBUG: Removed category container for ${categoryId}.`);
+            } else {
+                console.warn(`DEBUG: Container for ${categoryId} not found to remove.`);
+            }
+
+            // 4. Remove associated text entries from localStorage
+            const textEntriesKey = `textEntries_${this.currentMemberId}_${categoryId}`;
+            localStorage.removeItem(textEntriesKey);
+            console.log(`DEBUG: Removed text entries from localStorage key: ${textEntriesKey}`);
+
+            // 5. Save updated categories to localStorage
+            this.saveCategories();
+
+            // 6. Refresh the list in the manage modal (re-run the population logic)
+            console.log("DEBUG: Refreshing manage categories modal list.");
+             this.showManageCategoriesModal();
+
+            // 7. Switch to default category if the deleted one was active
+            if (this.currentCategory === categoryId) {
+                console.log(`DEBUG: Active category ${categoryId} was deleted, switching to photos.`);
+                this.switchCategory('photos');
+            }
+
+            alert(`Category "${categoryToDelete.name}" deleted successfully.`);
+
+        } catch (error) {
+            console.error(`Error deleting category ${categoryId}:`, error);
+            alert(`Failed to delete category: ${error.message}`);
+            // Consider restoring the category to the array if deletion failed midway?
+            // For now, just log the error.
+        }
+    }
+
+    /**
+     * Switch active category - Convert to Arrow Function
+     */
+    switchCategory = (categoryId) => { 
         console.log(`DEBUG: Switching to category ${categoryId}`);
         
         if (!categoryId) {
@@ -2785,135 +2776,312 @@ class MediaCategoryManager {
             return;
         }
         
-        // Log current categories
-        console.log(`DEBUG: Current categories available:`, this.categories.map(c => `${c.name} (${c.id})`));
-        
         // Check if category exists in our categories array
         const categoryExists = this.categories.some(c => c.id === categoryId);
         if (!categoryExists) {
             console.error(`ERROR: Attempted to switch to non-existent category: ${categoryId}`);
-            // Check if we should fall back to 'photos'
+            // Fallback to photos if possible
             if (categoryId !== 'photos' && this.categories.some(c => c.id === 'photos')) {
                 console.log(`DEBUG: Falling back to 'photos' category`);
                 this.switchCategory('photos');
                 return;
             }
-        }
-        
-        // Update active tab
-        const tabs = document.querySelectorAll('.category-tab');
-        if (tabs.length === 0) {
-            console.error("ERROR: No category tabs found in DOM");
+            // If photos doesn't exist or was the target, just return
             return;
         }
         
-        console.log(`DEBUG: Found ${tabs.length} category tabs in DOM`);
+        // Update active tab
+        const tabsContainer = document.querySelector('#media-container .media-category-tabs');
+        const tabs = tabsContainer?.querySelectorAll('.category-tab');
+        if (!tabs || tabs.length === 0) {
+            console.error("ERROR: No category tabs found in DOM to switch");
+            return;
+        }
         
         let tabFound = false;
         tabs.forEach(tab => {
-            const tabCategory = tab.getAttribute('data-category');
-            console.log(`DEBUG: Checking tab ${tabCategory} against ${categoryId}`);
-            if (tabCategory === categoryId) {
+            if (tab.getAttribute('data-category') === categoryId) {
                 tab.classList.add('active');
                 tabFound = true;
-                console.log(`DEBUG: Activated tab for category ${categoryId}`);
             } else {
                 tab.classList.remove('active');
             }
         });
         
         if (!tabFound) {
-            console.error(`ERROR: Tab for category ${categoryId} not found in DOM`);
-            console.log("DEBUG: Available tabs in DOM:", Array.from(tabs).map(tab => tab.getAttribute('data-category')));
-            
-            // Try to create the tab if it's in our categories but not in the DOM
-            if (categoryExists) {
-                console.log(`DEBUG: Category ${categoryId} exists in data but not in DOM, attempting to create it`);
-                const category = this.categories.find(c => c.id === categoryId);
-                if (category) {
-                    const success = this.createCategoryTabAndContainer(category.id, category.name, category.type);
-                    if (success) {
-                        console.log(`DEBUG: Successfully created missing tab for ${categoryId}, retrying switch`);
-                        // Try switching again now that we've created the tab
+             console.warn(`WARN: Tab for category ${categoryId} not found in DOM during switch.`);
+             // Attempt to create it if it should exist
+             const categoryData = this.categories.find(c => c.id === categoryId);
+             if (categoryData) {
+                 console.log(`DEBUG: Attempting to create missing tab for ${categoryId}`);
+                 this.createCategoryTabAndContainer(categoryData.id, categoryData.name, categoryData.type);
+                 // Re-run switch after a short delay to allow DOM update
                         setTimeout(() => this.switchCategory(categoryId), 50);
-                        return;
-                    }
-                }
+                 return; // Exit current execution
             }
         }
         
         // Update active content
-        const contents = document.querySelectorAll('.category-content');
-        if (contents.length === 0) {
-            console.error("ERROR: No category content containers found in DOM");
+        const mediaContentArea = document.querySelector('#media-container #media-content');
+        const contents = mediaContentArea?.querySelectorAll('.category-content');
+        if (!contents || contents.length === 0) {
+            console.error("ERROR: No category content containers found in DOM to switch");
             return;
         }
-        
-        console.log(`DEBUG: Found ${contents.length} category content containers in DOM`);
         
         let contentFound = false;
         contents.forEach(content => {
             if (content.id === `${categoryId}-container`) {
                 content.classList.add('active');
                 contentFound = true;
-                console.log(`DEBUG: Activated content for category ${categoryId}`);
             } else {
                 content.classList.remove('active');
             }
         });
         
         if (!contentFound) {
-            console.error(`ERROR: Content for category ${categoryId} not found in DOM`);
-            console.log("DEBUG: Available content containers in DOM:", Array.from(contents).map(content => content.id));
+             console.warn(`WARN: Content container for ${categoryId} not found in DOM during switch.`);
+              // Attempt to create it if it should exist
+             const categoryData = this.categories.find(c => c.id === categoryId);
+             if (categoryData) {
+                 console.log(`DEBUG: Attempting to create missing content for ${categoryId}`);
+                 this.createCategoryTabAndContainer(categoryData.id, categoryData.name, categoryData.type);
+                 // Re-run switch after a short delay
+                 setTimeout(() => this.switchCategory(categoryId), 50);
+                 return; // Exit current execution
+             }
         }
-        
-        // Update current category
+
+        // Update current category state
         this.currentCategory = categoryId;
         console.log(`%cSuccessfully switched to category: ${categoryId}`, "color: green; font-weight: bold");
         
-        // CRITICAL FIX: Ensure layout is properly applied after switching categories
-        const mediaGallery = document.querySelector('.media-gallery');
-        if (mediaGallery) {
-            // Trigger layout recalculation by accessing offsetHeight and forcing a style update
-            mediaGallery.style.display = 'none';
-            // Force browser to process the style change
-            void mediaGallery.offsetHeight;
-            // Restore display
-            mediaGallery.style.display = '';
-        }
+         // Trigger layout recalculation if needed (optional, but can help rendering)
+        // const mediaGallery = document.querySelector('#media-container');
+        // if (mediaGallery) {
+        //     mediaGallery.style.display = 'none';
+        //     void mediaGallery.offsetHeight;
+        //     mediaGallery.style.display = '';
+        // }
     }
     
     /**
      * Clear custom tabs and containers
      */
-    clearCustomTabsAndContainers() {
-        console.log("DEBUG: Clearing custom tabs and containers");
-        
-        // Get default category IDs for safer comparison
-        const defaultCategoryIds = this.defaultCategories.map(cat => cat.id);
-        console.log(`DEBUG: Default category IDs: ${defaultCategoryIds.join(', ')}`);
-        
-        // Remove custom tabs with more diagnostic info
-        const customTabs = document.querySelectorAll('.category-tab:not([data-category="photos"]):not([data-category="videos"]):not([data-category="documents"]):not([data-category="notes"]):not(.add-tab):not(.manage-tab)');
-        console.log(`DEBUG: Found ${customTabs.length} custom tabs to remove`);
-        
-        customTabs.forEach(tab => {
-            const categoryId = tab.getAttribute('data-category');
-            console.log(`DEBUG: Removing custom tab for category ${categoryId}`);
-            tab.remove();
-        });
-        
-        // Remove custom containers with more diagnostic info
-        const customContainers = document.querySelectorAll('.category-content:not(#photos-container):not(#videos-container):not(#documents-container):not(#notes-container)');
-        console.log(`DEBUG: Found ${customContainers.length} custom containers to remove`);
-        
-        customContainers.forEach(container => {
-            console.log(`DEBUG: Removing custom container ${container.id}`);
-            container.remove();
-        });
-        
-        console.log("DEBUG: Custom tabs and containers cleared");
+    clearCustomTabsAndContainers() { // Keep as normal function
+        // ... (rest of existing clearCustomTabsAndContainers code) ...
     }
+
+    /**
+     * Show modal for renaming a category
+     */
+    showRenameCategoryModal(oldCategoryId, currentName) {
+        const modal = document.getElementById('rename-category-modal');
+        if (!modal) {
+            console.error("Rename category modal not found.");
+            return;
+        }
+        document.getElementById('rename-category-old-id').value = oldCategoryId;
+        const nameInput = document.getElementById('rename-category-new-name');
+        nameInput.value = currentName;
+        modal.classList.remove('hidden');
+        nameInput.focus(); // Focus input
+        nameInput.select(); // Select current text
+    }
+
+     /**
+     * Handle the actual category renaming process
+     */
+    handleRenameCategory() {
+        const oldCategoryId = document.getElementById('rename-category-old-id').value;
+        const newName = document.getElementById('rename-category-new-name').value.trim();
+        const modal = document.getElementById('rename-category-modal');
+
+        if (!oldCategoryId || !newName) {
+            alert("Invalid input for renaming.");
+            return;
+        }
+
+        const newCategoryId = newName.toLowerCase().replace(/\s+/g, '-');
+
+        // Check if new name/ID conflicts with an *existing different* category
+        const conflictingCategory = this.categories.find(cat => cat.id === newCategoryId && cat.id !== oldCategoryId);
+        if (conflictingCategory) {
+            alert(`Cannot rename: A category with the name/ID "${newName}" already exists.`);
+            return;
+        }
+
+        // Find the category object to update
+        const categoryIndex = this.categories.findIndex(cat => cat.id === oldCategoryId);
+        if (categoryIndex === -1) {
+            console.error(`Cannot find category with old ID ${oldCategoryId} to rename.`);
+            alert("An error occurred trying to rename the category.");
+            return;
+        }
+
+        const categoryToUpdate = this.categories[categoryIndex];
+        const oldName = categoryToUpdate.name;
+
+        console.log(`DEBUG: Renaming category ${oldCategoryId} ('${oldName}') to ${newCategoryId} ('${newName}')`);
+
+        try {
+            // 1. Update category object in the array
+            categoryToUpdate.id = newCategoryId;
+            categoryToUpdate.name = newName;
+
+            // 2. Update DOM elements
+            // Update Tab
+            const tab = document.querySelector(`.category-tab[data-category="${oldCategoryId}"]`);
+            if (tab) {
+                tab.textContent = newName;
+                tab.setAttribute('data-category', newCategoryId);
+                console.log(`DEBUG: Updated tab data-category to ${newCategoryId}`);
+            } else { console.warn(`WARN: Tab for ${oldCategoryId} not found during rename.`); }
+
+            // Update Content Container ID
+            const container = document.getElementById(`${oldCategoryId}-container`);
+            if (container) {
+                container.id = `${newCategoryId}-container`;
+                console.log(`DEBUG: Updated container ID to ${newCategoryId}-container`);
+            } else { console.warn(`WARN: Container for ${oldCategoryId}-container not found during rename.`); }
+            
+            // Update Manage Modal List Item (if still exists - it might be hidden)
+             const manageModal = document.getElementById('manage-categories-modal');
+             const manageListItem = manageModal?.querySelector(`.manage-category-item[data-category-id="${oldCategoryId}"]`);
+             if(manageListItem) {
+                manageListItem.querySelector('.category-name').textContent = newName;
+                manageListItem.dataset.categoryId = newCategoryId; // Update data attribute for future actions
+                // Also update the rename button's listener reference if needed, though re-showing modal is easier
+                console.log(`DEBUG: Updated manage list item for ${oldCategoryId} -> ${newCategoryId}`);
+             }
+
+            // 3. Rename localStorage key for text entries
+            const oldTextKey = `textEntries_${this.currentMemberId}_${oldCategoryId}`;
+            const newTextKey = `textEntries_${this.currentMemberId}_${newCategoryId}`;
+            const textEntries = localStorage.getItem(oldTextKey);
+            if (textEntries) {
+                localStorage.setItem(newTextKey, textEntries);
+                localStorage.removeItem(oldTextKey);
+                console.log(`DEBUG: Renamed text entries key from ${oldTextKey} to ${newTextKey}`);
+            }
+
+            // 4. Save the updated categories array
+            this.saveCategories();
+
+            // 5. Hide the rename modal
+            if (modal) modal.classList.add('hidden');
+            
+            // 6. Refresh the manage modal list to reflect changes accurately
+            this.showManageCategoriesModal();
+
+            alert(`Category "${oldName}" renamed to "${newName}" successfully.`);
+
+        } catch (error) {
+            console.error(`Error renaming category ${oldCategoryId}:`, error);
+            alert(`An error occurred: ${error.message}`);
+            // Consider rollback? For now, just alert.
+        }
+    }
+
+    /**
+     * Initialize Rename Modal Listeners
+     */
+    initializeRenameModal() {
+        const modal = document.getElementById('rename-category-modal');
+        if (!modal) return;
+        const form = modal.querySelector('#rename-category-form');
+        const closeBtn = modal.querySelector('.close-modal');
+        const cancelBtn = modal.querySelector('.cancel-btn');
+
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleRenameCategory();
+            });
+        }
+         if (closeBtn) {
+             closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+         }
+         if (cancelBtn) {
+             cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+         }
+    }
+
+     /**
+      * Duplicate a custom category
+      */
+     handleDuplicateCategory(categoryIdToDuplicate) {
+         if (!categoryIdToDuplicate) {
+             console.error("Duplicate category called with no ID");
+             return;
+         }
+ 
+         const categoryToDuplicate = this.categories.find(cat => cat.id === categoryIdToDuplicate);
+         if (!categoryToDuplicate) {
+             console.error(`Cannot find category ${categoryIdToDuplicate} to duplicate.`);
+             alert("Cannot duplicate category: Original not found.");
+             return;
+         }
+ 
+         // Create new name and ID, checking for conflicts
+         let newName = `${categoryToDuplicate.name} Copy`;
+         let newCategoryId = newName.toLowerCase().replace(/\s+/g, '-');
+         let suffix = 1;
+         while (this.categories.some(cat => cat.id === newCategoryId)) {
+             suffix++;
+             newName = `${categoryToDuplicate.name} Copy ${suffix}`;
+             newCategoryId = newName.toLowerCase().replace(/\s+/g, '-');
+         }
+ 
+         console.log(`DEBUG: Duplicating category ${categoryIdToDuplicate} to ${newCategoryId} ('${newName}')`);
+ 
+         const newCategory = {
+             id: newCategoryId,
+             name: newName,
+             type: categoryToDuplicate.type
+         };
+ 
+         try {
+             // 1. Add to categories array
+             this.categories.push(newCategory);
+ 
+             // 2. Create UI elements
+             const uiSuccess = this.createCategoryTabAndContainer(newCategory.id, newCategory.name, newCategory.type);
+             if (!uiSuccess) {
+                 throw new Error("Failed to create UI elements for duplicated category.");
+             }
+ 
+             // 3. Duplicate text entries
+             const oldTextKey = `textEntries_${this.currentMemberId}_${categoryIdToDuplicate}`;
+             const newTextKey = `textEntries_${this.currentMemberId}_${newCategoryId}`;
+             const textEntries = localStorage.getItem(oldTextKey);
+             if (textEntries) {
+                 localStorage.setItem(newTextKey, textEntries);
+                 console.log(`DEBUG: Duplicated text entries from ${oldTextKey} to ${newTextKey}`);
+             }
+ 
+             // 4. Save updated categories array
+             this.saveCategories();
+ 
+             // 5. Refresh manage modal list
+             this.showManageCategoriesModal();
+ 
+             // 6. Optionally switch to the new category
+             this.switchCategory(newCategoryId);
+ 
+             alert(`Category "${categoryToDuplicate.name}" duplicated as "${newName}".`);
+ 
+         } catch (error) {
+             console.error(`Error duplicating category ${categoryIdToDuplicate}:`, error);
+             alert(`Failed to duplicate category: ${error.message}`);
+             // Clean up: remove the category from the array if it was added but failed later?
+             const index = this.categories.findIndex(cat => cat.id === newCategoryId);
+             if (index > -1) {
+                 this.categories.splice(index, 1);
+             }
+         }
+     }
+
 }
 
 /**
@@ -3001,14 +3169,13 @@ function initializeFullscreenButton() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DEBUG: DOM loaded, initializing application components");
     
-    // Create ProfilesManager instance
+    // Create managers
     window.profilesManager = new ProfilesManager();
-    
-    // Create MediaCategoryManager instance 
     window.mediaCategoryManager = new MediaCategoryManager();
-    
-    // Create TimelineManager instance
     window.timelineManager = new TimelineManager();
+    
+    // Call createTextEntryModal AFTER instantiation
+    window.mediaCategoryManager.createTextEntryModal(); 
     
     // Setup profile photo upload
     setupProfilePhotoUpload();

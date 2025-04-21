@@ -393,3 +393,72 @@ button:active {
 #relationship-modal .modal-content {
     overflow: visible; /* Allow dropdown to overflow modal bounds */
 }
+
+/* Styles for empty states in media gallery categories */
+.media-items .empty-state,
+.text-entries .empty-state {
+    text-align: center;
+    padding: 30px 15px;
+    margin: 10px; /* Add some margin */
+    color: var(--text-color-muted, #a0b0c0); /* Lighter text color */
+    font-style: italic;
+    font-size: 0.95em;
+    border: 1px dashed var(--border-color, #445a70); /* Subtle dashed border */
+    border-radius: var(--border-radius, 4px);
+    background-color: rgba(0, 0, 0, 0.05); /* Very subtle background */
+}
+
+/* Styles for Manage Categories Modal List */
+#manage-categories-modal #manageable-categories-list {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    max-height: 300px; /* Limit height if many categories */
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+#manage-categories-modal .manage-category-item {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 10px 15px; /* Adjusted padding for bubble look */
+    background-color: rgba(0, 0, 0, 0.1); /* Subtle background for the bubble */
+    border-radius: var(--border-radius, 8px); /* Rounded corners */
+    margin-bottom: 10px; /* Space between bubbles */
+}
+
+#manage-categories-modal .manage-category-item:last-child {
+    margin-bottom: 0; /* Remove margin from last item */
+    border-bottom: none; /* Ensure no border even if rule changed elsewhere */
+}
+
+#manage-categories-modal .category-info { /* Style the left side (name, type) */
+    display: flex;
+    flex-direction: column; /* Stack name and type vertically */
+    align-items: flex-start;
+    flex-grow: 1; 
+    margin-right: 15px; /* More space before buttons */
+}
+
+#manage-categories-modal .category-name { /* Style for category name */
+    font-weight: 500;
+    color: var(--light-color, #f0e6d8);
+}
+
+#manage-categories-modal .category-type { /* Style for category type */
+    font-size: 0.8em;
+    color: var(--text-light, #a7b7c7);
+    margin-left: 0; /* Align directly below name */
+}
+
+#manage-categories-modal .category-actions { /* Container for buttons */
+    display: flex;
+    gap: 8px; /* Space between buttons */
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Optional: Adjust button size if needed */
+#manage-categories-modal .manage-category-item .small-btn {
+    padding: 4px 8px;
+    font-size: 0.85em;
+}
